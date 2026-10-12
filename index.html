@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>켈틱 크로스 타로</title>
+  <meta name="description" content="78장 덱에서 10장을 순서대로 뽑아 켈틱 크로스로 풀이하는 웹 타로 게임">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=Nanum+Myeongjo:wght@700;800&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="logo">✦ 켈틱 크로스 타로</h1>
+    <button id="restartBtn" class="btn ghost" hidden>처음으로</button>
+  </header>
+
+  <main>
+    <!-- 1단계: 질문 -->
+    <section id="intro" class="intro">
+      <p class="eyebrow">10장의 카드가 들려주는 이야기</p>
+      <h2>마음속 질문을 떠올려 보세요</h2>
+      <p class="sub">질문을 적으면 풀이 맨 위에 함께 표시됩니다. 비워 두어도 괜찮아요.</p>
+      <textarea id="question" rows="2" maxlength="120" placeholder="예) 지금 준비하는 이직, 잘 될까요?"></textarea>
+      <button id="startBtn" class="btn primary">덱 섞기</button>
+      <p class="fine">78장 덱 · 켈틱 크로스 10장 배열 · 오락용 콘텐츠입니다</p>
+    </section>
+
+    <!-- 2단계: 게임판 -->
+    <section id="game" class="game" hidden>
+      <div class="table-area">
+        <div id="board" class="board" aria-label="켈틱 크로스 배치판"></div>
+        <div class="controls">
+          <button id="deck" class="deck" aria-label="카드 뽑기">
+            <span class="deck-card"></span><span class="deck-card"></span><span class="deck-card"></span>
+            <span id="deckCount" class="deck-count">78</span>
+          </button>
+          <div class="control-text">
+            <p id="prompt" class="prompt">덱을 눌러 <b>1번 카드</b>를 뽑으세요</p>
+            <div class="control-buttons">
+              <button id="drawBtn" class="btn primary">카드 뽑기</button>
+              <button id="autoBtn" class="btn ghost">남은 카드 모두 뽑기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="reading-panel">
+        <p id="questionLabel" class="question-label" hidden></p>
+        <ol id="readingList" class="reading-list"></ol>
+        <button id="summaryBtn" class="btn primary wide" hidden>종합 풀이 보기</button>
+        <section id="summary" class="summary" hidden></section>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="footer">카드 의미는 라이더-웨이트 계열의 일반적 해석을 바탕으로 직접 작성했습니다. 결과는 재미로만 봐 주세요.</footer>
+
+  <script src="js/cards.js"></script>
+  <script src="js/reading.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

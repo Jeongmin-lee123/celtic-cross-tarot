@@ -1,0 +1,8 @@
+# 운세의 신에서 수집한 원문 데이터는 저작물이므로 저장소에 올리지 않는다 (분석 스크립트만 공유)
+research/unsin_major_arcana.json
+research/draws_log.jsonl
+research/analysis.json
+
+__pycache__/
+.env
+.DS_Store
