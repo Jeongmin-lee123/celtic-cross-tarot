@@ -13,7 +13,10 @@
 <body>
   <header class="topbar">
     <h1 class="logo">✦ 켈틱 크로스 타로</h1>
-    <button id="restartBtn" class="btn ghost" hidden>처음으로</button>
+    <nav class="topnav">
+      <a class="btn ghost" href="gallery.html">카드 도감</a>
+      <button id="restartBtn" class="btn ghost" hidden>처음으로</button>
+    </nav>
   </header>
 
   <main>
@@ -24,7 +27,7 @@
       <p class="sub">질문을 적으면 풀이 맨 위에 함께 표시됩니다. 비워 두어도 괜찮아요.</p>
       <div id="topics" class="topics" role="radiogroup" aria-label="질문 주제"></div>
       <textarea id="question" rows="2" maxlength="120" placeholder="예) 지금 준비하는 이직, 잘 될까요?"></textarea>
-      <button id="startBtn" class="btn primary">덱 섞기</button>
+      <button id="startBtn" class="btn primary">덱 섞고 펼치기</button>
       <p class="fine">78장 덱 · 켈틱 크로스 10장 배열 · 오락용 콘텐츠입니다</p>
     </section>
 
@@ -33,19 +36,10 @@
       <div class="table-area">
         <div id="board" class="board" aria-label="켈틱 크로스 배치판"></div>
         <div class="controls">
-          <button id="deck" class="deck" aria-label="카드 뽑기">
-            <span class="deck-card"></span><span class="deck-card"></span><span class="deck-card"></span>
-            <span id="deckCount" class="deck-count">78</span>
-          </button>
-          <div class="control-text">
-            <ol id="progress" class="progress" aria-label="진행 상황"></ol>
-            <p id="prompt" class="prompt">덱을 눌러 <b>1번 카드</b>를 뽑으세요</p>
-            <div class="control-buttons">
-              <button id="drawBtn" class="btn primary">카드 뽑기</button>
-              <button id="autoBtn" class="btn ghost">남은 카드 모두 뽑기</button>
-            </div>
-          </div>
+          <ol id="progress" class="progress" aria-label="진행 상황"></ol>
+          <p id="prompt" class="prompt"></p>
         </div>
+        <div id="fan" class="fan" aria-label="펼쳐진 카드 78장"></div>
       </div>
 
       <aside class="reading-panel">
@@ -75,6 +69,7 @@
   <footer class="footer">카드 의미는 라이더-웨이트 계열의 일반적 해석을 바탕으로 직접 작성했습니다. 결과는 재미로만 봐 주세요.</footer>
 
   <script src="js/cards.js"></script>
+  <script src="js/art.js"></script>
   <script src="js/reading.js"></script>
   <script src="js/app.js"></script>
 </body>

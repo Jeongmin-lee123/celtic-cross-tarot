@@ -33,6 +33,8 @@ body {
   border-bottom: 1px solid rgba(201, 162, 74, 0.25);
 }
 .logo { margin: 0; font-family: var(--serif); font-size: 22px; color: var(--gold); }
+.topnav { display: flex; gap: 8px; }
+a.btn { text-decoration: none; display: inline-block; }
 
 main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
 
@@ -76,7 +78,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
 .board {
   position: relative;
   width: 100%;
-  max-width: calc((100vh - 230px) * 680 / 640);
+  max-width: max(380px, calc((100vh - 400px) * 680 / 640));
   margin: 0 auto;
   aspect-ratio: 680 / 640;
   border-radius: 24px;
@@ -113,7 +115,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
   height: 100%;
   transform-style: preserve-3d;
   transition: transform 0.6s;
-  border-radius: 10px;
+  border-radius: 6%/3.6%;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
 }
 .card.flipped { transform: rotateY(180deg); }
@@ -121,110 +123,58 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
 .face {
   position: absolute;
   inset: 0;
-  border-radius: 10px;
+  border-radius: 6%/3.6%;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   overflow: hidden;
 }
-.face.back {
-  background:
-    repeating-linear-gradient(45deg, rgba(201, 162, 74, 0.18) 0 2px, transparent 2px 10px),
-    repeating-linear-gradient(-45deg, rgba(201, 162, 74, 0.18) 0 2px, transparent 2px 10px),
-    var(--night-3);
-  border: 2px solid var(--gold);
-}
-.face.back::after {
-  content: "✦";
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: var(--gold);
-  font-size: clamp(18px, 3vw, 30px);
-}
-.face.front {
-  transform: rotateY(180deg);
-  background: var(--parchment);
-  color: var(--ink);
-  border: 2px solid var(--gold);
-}
-.face.front.major { background: linear-gradient(170deg, #fbf3dc, #ead9a8); }
-.face.front.wands { background: linear-gradient(170deg, #fbeee6, #f0cdb5); }
-.face.front.cups { background: linear-gradient(170deg, #eef3fb, #c9d8ee); }
-.face.front.swords { background: linear-gradient(170deg, #f1f2f5, #cfd3dd); }
-.face.front.pentacles { background: linear-gradient(170deg, #f0f5ea, #d0dfbf); }
-
-.front-inner {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8% 4%;
-  text-align: center;
-}
-.front-inner.is-reversed { transform: rotate(180deg); }
-.num { font: 800 clamp(10px, 1.4vw, 15px) var(--serif); color: #8a6a1f; }
-.sym { font-size: clamp(20px, 3.4vw, 38px); line-height: 1; }
-.nm { font: 800 clamp(9px, 1.25vw, 14px) var(--serif); line-height: 1.25; word-break: keep-all; }
-.en { font-size: clamp(6px, 0.8vw, 9px); color: #6b7088; line-height: 1.2; }
+.face.back { background: var(--card-back) center / 100% 100% no-repeat; }
+.face.front { transform: rotateY(180deg); }
+.face.front svg { width: 100%; height: 100%; display: block; }
+.face.front.is-reversed svg { transform: rotate(180deg); }
 .rev-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 4%;
+  right: 6%;
   background: #b5452f;
   color: #fff;
-  font-size: clamp(8px, 1vw, 11px);
+  font-size: clamp(8px, 1vw, 12px);
   font-weight: 700;
   border-radius: 6px;
   padding: 0 5px;
 }
 
-.controls { display: flex; align-items: center; gap: 24px; margin-top: 20px; }
-.deck {
-  position: relative;
-  flex: none;
-  width: 84px;
-  height: 128px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 0;
-}
-.deck:disabled { cursor: default; opacity: 0.4; }
-.deck-card {
-  position: absolute;
-  inset: 0;
-  border-radius: 10px;
-  border: 2px solid var(--gold);
-  background:
-    repeating-linear-gradient(45deg, rgba(201, 162, 74, 0.18) 0 2px, transparent 2px 10px),
-    var(--night-3);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-}
-.deck-card:nth-child(1) { transform: translate(-4px, 4px) rotate(-3deg); }
-.deck-card:nth-child(2) { transform: translate(2px, 2px) rotate(2deg); }
-.deck:hover:not(:disabled) .deck-card:nth-child(3) { transform: translateY(-6px); }
-.deck-card:nth-child(3) { transition: transform 0.2s; }
-.deck.shuffling .deck-card:nth-child(1) { animation: shuffle-l 0.5s 2; }
-.deck.shuffling .deck-card:nth-child(2) { animation: shuffle-r 0.5s 2; }
-@keyframes shuffle-l { 50% { transform: translate(-34px, 0) rotate(-10deg); } }
-@keyframes shuffle-r { 50% { transform: translate(34px, 0) rotate(10deg); } }
-.deck-count {
-  position: absolute;
-  bottom: -10px;
-  right: -10px;
-  background: var(--gold);
-  color: var(--night);
-  font-weight: 700;
-  font-size: 13px;
-  border-radius: 999px;
-  padding: 2px 8px;
-}
-.prompt { margin: 0 0 10px; color: var(--muted); }
+.controls { margin-top: 18px; text-align: center; }
+.prompt { margin: 0 0 6px; color: var(--muted); }
 .prompt b { color: var(--gold-soft); }
-.control-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+.prompt-left { font-size: 13px; }
+.controls .progress { justify-content: center; }
+
+/* 펼친 카드 78장 */
+.fan { display: flex; flex-direction: column; gap: 2px; padding: 4px 0 16px; --cw: 42px; --step: 13.6px; }
+.fan-row { display: flex; justify-content: center; padding-top: 12px; }
+.fan-card {
+  flex: none;
+  width: var(--cw);
+  aspect-ratio: 3 / 5;
+  margin-left: calc(var(--step) - var(--cw));
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: var(--card-back) center / 100% 100% no-repeat;
+  box-shadow: -2px 2px 6px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transform: translateY(var(--dy)) rotate(var(--rot));
+  transition: transform 0.18s, opacity 0.3s;
+  animation: deal 0.45s backwards;
+  animation-delay: var(--delay);
+}
+.fan-card:first-child { margin-left: 0; }
+.fan-card:hover:not(:disabled), .fan-card:focus-visible { transform: translateY(calc(var(--dy) - 14px)) rotate(var(--rot)); outline: none; box-shadow: 0 0 0 2px var(--gold), 0 6px 14px rgba(0, 0, 0, 0.5); }
+.fan-card.taken { opacity: 0; pointer-events: none; }
+.fan.busy .fan-card, .fan.done .fan-card { cursor: default; }
+.fan.done .fan-card:not(.taken) { opacity: 0.35; }
+@keyframes deal { from { opacity: 0; transform: translateY(-40px) rotate(0deg); } }
 
 /* 풀이 패널 */
 .reading-panel {
@@ -339,11 +289,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
   font-size: 20px;
   cursor: pointer;
 }
-.modal-card { flex: none; width: 180px; height: 290px; }
-.modal-card .nm { font-size: 22px; }
-.modal-card .num { font-size: 20px; }
-.modal-card .sym { font-size: 64px; }
-.modal-card .en { font-size: 13px; }
+.modal-card { flex: none; width: 200px; height: 333px; }
 .modal-card .rev-badge { font-size: 14px; }
 .modal-info h3 { font: 800 28px var(--serif); margin: 4px 0 0; color: var(--gold); }
 .modal-pos { margin: 0; font-size: 13px; color: var(--muted); }
@@ -359,14 +305,22 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
   .game { grid-template-columns: 1fr; }
   .board { max-width: none; }
   .reading-panel { position: static; max-height: none; }
-  .controls { position: sticky; bottom: 0; background: var(--night); padding: 12px 0; z-index: 5; }
-  .deck { width: 60px; height: 92px; }
-  .controls { gap: 14px; padding: 10px 0; }
+  .fan { --cw: 30px; --step: 12.6px; }
+  .topbar { padding: 12px 16px; gap: 8px; }
+  .logo { font-size: 18px; white-space: nowrap; }
+  .topnav .btn { padding: 6px 12px; font-size: 14px; white-space: nowrap; }
   .progress { gap: 4px; margin-bottom: 6px; }
   .progress li { width: 20px; height: 20px; font-size: 10px; }
   .prompt { font-size: 13px; margin-bottom: 6px; }
-  .control-buttons { flex-wrap: nowrap; gap: 6px; }
-  .control-buttons .btn { padding: 8px 12px; font-size: 14px; white-space: nowrap; }
   .modal-box { flex-direction: column; text-align: center; }
-  .modal-card { width: 140px; height: 225px; }
+  .modal-card { width: 150px; height: 250px; }
 }
+
+/* 카드 도감 */
+.gallery-note { color: var(--muted); text-align: center; margin: 0 0 20px; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
+.gallery-item { margin: 0; text-align: center; cursor: pointer; }
+.gallery-card { aspect-ratio: 3 / 5; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45); transition: transform 0.15s; }
+.gallery-item:hover .gallery-card { transform: translateY(-4px); }
+.gallery-card svg, .modal-card svg { width: 100%; height: 100%; display: block; }
+.gallery-item figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }

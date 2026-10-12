@@ -1,17 +1,17 @@
-// 화면 제어: 질문 → 덱 섞기 → 10장을 순서대로 뽑아 배치·공개 → 종합 풀이
+// 화면 제어: 질문 → 덱 섞고 펼치기 → 사용자가 10장을 직접 골라 배치·공개 → 종합 풀이
 (function () {
-  // 680×640 기준 좌표. 크로스(1~6) + 오른쪽 스태프(7~10, 아래에서 위로)
-  const BOARD_W = 680, BOARD_H = 640, CARD_W = 96, CARD_H = 150;
+  // 680×640 기준 좌표. 크로스(1~6) + 오른쪽 스태프(7~10, 아래에서 위로). 카드 비율 3:5
+  const BOARD_W = 680, BOARD_H = 640, CARD_W = 90, CARD_H = 150;
   const SLOTS = {
-    1: [182, 245], 2: [182, 245], 3: [60, 245], 4: [304, 245], 5: [182, 80], 6: [182, 410],
-    7: [540, 485], 8: [540, 330], 9: [540, 175], 10: [540, 20],
+    1: [185, 245], 2: [185, 245], 3: [65, 245], 4: [305, 245], 5: [185, 80], 6: [185, 410],
+    7: [545, 485], 8: [545, 330], 9: [545, 175], 10: [545, 20],
   };
-  const FLY_MS = 520, FLIP_MS = 600, AUTO_GAP_MS = 350;
+  const isNarrow = () => window.matchMedia("(max-width: 900px)").matches;
+  const FLY_MS = 560, FLIP_MS = 600;
 
   const $ = (id) => document.getElementById(id);
   const els = {
-    intro: $("intro"), game: $("game"), board: $("board"), deck: $("deck"),
-    deckCount: $("deckCount"), prompt: $("prompt"), drawBtn: $("drawBtn"), autoBtn: $("autoBtn"),
+    intro: $("intro"), game: $("game"), board: $("board"), fan: $("fan"), prompt: $("prompt"),
     readingList: $("readingList"), summaryBtn: $("summaryBtn"), summary: $("summary"),
     question: $("question"), questionLabel: $("questionLabel"), startBtn: $("startBtn"),
     restartBtn: $("restartBtn"), topics: $("topics"), progress: $("progress"),
@@ -19,7 +19,10 @@
     modalEn: $("modalEn"), modalUp: $("modalUp"), modalRev: $("modalRev"), modalClose: $("modalClose"),
   };
 
-  let spread = [], index = 0, busy = false, autoRun = false, topic = "general";
+  let deck = [], spread = [], busy = false, topic = "general";
+
+  // 카드 뒷면은 한 번만 만들어 CSS 배경으로 재사용한다 (펼친 78장 + 뒤집기 전 카드)
+  document.documentElement.style.setProperty("--card-back", `url("data:image/svg+xml,${encodeURIComponent(ART.back())}")`);
 
   function buildTopics() {
     els.topics.innerHTML = Object.entries(TOPICS).map(([key, t]) =>
@@ -31,6 +34,7 @@
   }
 
   function renderProgress() {
+    const index = spread.length;
     els.progress.innerHTML = POSITIONS.map((p, i) =>
       `<li class="${i < index ? "done" : i === index ? "current" : ""}" title="${p.n}. ${p.name}">${p.n}</li>`).join("");
   }
@@ -55,24 +59,44 @@
     });
   }
 
+  // 섞인 78장을 부채꼴 줄로 펼친다. i번째 카드가 곧 deck[i]
+  function buildFan() {
+    const rows = isNarrow() ? 3 : 2; // 데스크톱은 2줄(39장씩), 모바일은 3줄(26장씩)
+    const perRow = Math.ceil(deck.length / rows);
+    els.fan.innerHTML = "";
+    for (let r = 0; r < rows; r++) {
+      const row = document.createElement("div");
+      row.className = "fan-row";
+      for (let j = 0; j < perRow; j++) {
+        const i = r * perRow + j;
+        if (i >= deck.length) break;
+        const t = j - (perRow - 1) / 2; // 가운데 기준 위치
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "fan-card";
+        btn.dataset.i = i;
+        btn.setAttribute("aria-label", `펼친 카드 ${i + 1}번째`);
+        const curve = 26 / perRow; // 줄이 길수록 완만하게
+        btn.style.setProperty("--rot", `${(t * 1.1 * curve).toFixed(2)}deg`);
+        btn.style.setProperty("--dy", `${(t * t * 0.18 * curve * curve).toFixed(1)}px`);
+        btn.style.setProperty("--delay", `${i * 8}ms`);
+        btn.addEventListener("click", () => pick(btn));
+        row.appendChild(btn);
+      }
+      els.fan.appendChild(row);
+    }
+  }
+
   function cardFace(card, reversed) {
-    const suit = card.suit ? SUITS[card.suit] : null;
-    const symbol = suit ? suit.symbol : "✦";
-    const cls = card.suit || "major";
     return `
       <div class="face back"></div>
-      <div class="face front ${cls}">
-        <div class="front-inner${reversed ? " is-reversed" : ""}">
-          <span class="num">${card.numeral}</span>
-          <span class="sym">${symbol}</span>
-          <span class="nm">${card.nameKo}</span>
-          <span class="en">${card.nameEn}</span>
-        </div>
+      <div class="face front${reversed ? " is-reversed" : ""}">
+        ${ART.front(card)}
         ${reversed ? '<span class="rev-badge">역</span>' : ""}
       </div>`;
   }
 
-  function placeCard(item) {
+  function placeCard(item, fromEl) {
     const n = item.position.n;
     const slot = els.board.querySelector(`.slot[data-n="${n}"]`);
     const flyer = document.createElement("div");
@@ -82,12 +106,13 @@
     slot.classList.add("filled");
     flyer.addEventListener("click", () => { focusEntry(n); openModal(item); });
 
-    // 덱 위치에서 슬롯으로 날아오는 연출
-    const from = els.deck.getBoundingClientRect();
+    // 고른 카드 자리에서 슬롯으로 날아오는 연출
+    const from = fromEl.getBoundingClientRect();
     const to = slot.getBoundingClientRect();
     const dx = from.left + from.width / 2 - (to.left + to.width / 2);
     const dy = from.top + from.height / 2 - (to.top + to.height / 2);
-    flyer.style.transform = `translate(${dx}px, ${dy}px) scale(0.9)`;
+    const scale = Math.max(0.2, from.width / to.width);
+    flyer.style.transform = `translate(${dx}px, ${dy}px) scale(${scale.toFixed(3)})`;
     flyer.getBoundingClientRect(); // 리플로우로 시작 위치 확정
     flyer.style.transition = `transform ${FLY_MS}ms cubic-bezier(.2,.8,.2,1)`;
     flyer.style.transform = "";
@@ -116,7 +141,7 @@
       <p class="entry-text">${r.text}</p>`;
     els.readingList.appendChild(li);
     // 모바일에서는 풀이 목록이 게임판 아래에 있어, 자동 스크롤하면 카드가 놓이는 장면을 놓친다
-    focusEntry(item.position.n, !window.matchMedia("(max-width: 900px)").matches);
+    focusEntry(item.position.n, !isNarrow());
   }
 
   function openModal(item) {
@@ -143,42 +168,36 @@
   }
 
   function updatePrompt() {
-    els.deckCount.textContent = DECK.length - index;
     renderProgress();
-    if (index >= POSITIONS.length) {
-      els.prompt.innerHTML = "10장을 모두 뽑았습니다. <b>종합 풀이</b>를 확인하세요";
-      els.drawBtn.hidden = els.autoBtn.hidden = true;
-      els.deck.disabled = true;
-      els.summaryBtn.hidden = false;
+    if (spread.length >= POSITIONS.length) {
+      els.prompt.innerHTML = "10장을 모두 골랐습니다. <b>종합 풀이</b>를 확인하세요";
+      els.fan.classList.add("done");
+      els.summaryBtn.hidden = !els.summary.hidden;
       return;
     }
-    const p = POSITIONS[index];
-    els.prompt.innerHTML = `덱을 눌러 <b>${p.n}번 카드</b> · ${josa(p.name, "을/를")} 뽑으세요`;
+    const p = POSITIONS[spread.length];
+    els.prompt.innerHTML = `마음이 가는 카드를 골라 주세요 · <b>${p.n}번</b> ${p.name} <span class="prompt-left">(남은 카드 ${deck.length - spread.length}장)</span>`;
   }
 
-  async function drawNext() {
-    if (busy || index >= spread.length) return;
+  async function pick(btn) {
+    if (busy || spread.length >= POSITIONS.length || btn.disabled) return;
     busy = true;
-    const item = spread[index];
-    await placeCard(item);
+    btn.disabled = true;
+    const { card, reversed } = deck[btn.dataset.i];
+    const item = { position: POSITIONS[spread.length], card, reversed };
+    spread.push(item);
+    els.fan.classList.add("busy");
+    const flight = placeCard(item, btn);
+    btn.classList.add("taken");
+    await flight;
     addEntry(item);
-    index++;
     updatePrompt();
+    els.fan.classList.remove("busy");
     busy = false;
   }
 
-  async function drawAll() {
-    if (autoRun) return;
-    autoRun = true;
-    els.autoBtn.disabled = els.drawBtn.disabled = true;
-    while (index < spread.length) {
-      await drawNext();
-      await new Promise((r) => setTimeout(r, AUTO_GAP_MS));
-    }
-    autoRun = false;
-  }
-
   function showSummary() {
+    if (spread.length < POSITIONS.length) return;
     const s = summarize(spread, els.question.value.trim(), topic);
     els.summary.innerHTML = `<h3>종합 풀이</h3>` +
       s.lines.map((l) => `<div class="summary-row"><p class="summary-head">${l.head}</p><p>${l.body}</p></div>`).join("") +
@@ -204,14 +223,14 @@
   }
 
   function startGame() {
-    spread = drawSpread(DECK);
-    index = 0;
-    busy = autoRun = false;
+    deck = prepareDeck(DECK);
+    spread = [];
+    busy = false;
     buildBoard();
+    buildFan();
+    els.fan.classList.remove("done", "busy");
     els.readingList.innerHTML = "";
     els.summary.hidden = els.summaryBtn.hidden = true;
-    els.drawBtn.hidden = els.autoBtn.hidden = false;
-    els.drawBtn.disabled = els.autoBtn.disabled = els.deck.disabled = false;
 
     const q = els.question.value.trim();
     const label = TOPICS[topic].label;
@@ -221,9 +240,6 @@
     els.intro.hidden = true;
     els.game.hidden = false;
     els.restartBtn.hidden = false;
-    els.deck.classList.remove("shuffling");
-    void els.deck.offsetWidth;
-    els.deck.classList.add("shuffling");
     updatePrompt();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -239,17 +255,12 @@
   els.modalClose.addEventListener("click", closeModal);
   els.modal.addEventListener("click", (e) => { if (e.target === els.modal) closeModal(); });
   els.startBtn.addEventListener("click", startGame);
-  els.deck.addEventListener("click", drawNext);
-  els.drawBtn.addEventListener("click", drawNext);
-  els.autoBtn.addEventListener("click", drawAll);
   els.summaryBtn.addEventListener("click", showSummary);
   els.restartBtn.addEventListener("click", restart);
   els.question.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); startGame(); }
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !els.modal.hidden) { closeModal(); return; }
-    if (els.game.hidden || e.target === els.question || !els.modal.hidden) return;
-    if (e.code === "Space") { e.preventDefault(); drawNext(); }
+    if (e.key === "Escape" && !els.modal.hidden) closeModal();
   });
 })();

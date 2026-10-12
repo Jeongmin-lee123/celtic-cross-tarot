@@ -2,7 +2,8 @@
 const assert = require("assert");
 const { DECK, SUITS } = require("../js/cards.js");
 global.SUITS = SUITS;
-const { POSITIONS, TOPICS, josa, drawSpread, interpret, summarize, readingToText } = require("../js/reading.js");
+const { POSITIONS, TOPICS, josa, prepareDeck, drawSpread, interpret, summarize, readingToText } = require("../js/reading.js");
+const { ART } = require("../js/art.js");
 
 assert.strictEqual(DECK.length, 78, "덱은 78장");
 assert.strictEqual(new Set(DECK.map((c) => c.id)).size, 78, "카드 id 중복 없음");
@@ -42,6 +43,21 @@ for (const key of Object.keys(TOPICS)) {
     assert.ok(text.includes("10. 최종 결과") && text.includes(TOPICS[key].label));
   }
 }
+
+// 사용자가 고르는 덱: 78장 전부, 중복 없이, 방향이 정해져 있어야 한다
+const prepared = prepareDeck(DECK);
+assert.strictEqual(prepared.length, 78);
+assert.strictEqual(new Set(prepared.map((d) => d.card.id)).size, 78);
+assert.ok(prepared.every((d) => typeof d.reversed === "boolean"));
+
+// 카드 아트: 78장 앞면 + 뒷면이 숫자 오류 없이 생성되고, 이름이 들어간다
+DECK.forEach((c) => {
+  const svg = ART.front(c);
+  assert.ok(svg.startsWith("<svg") && svg.trim().endsWith("</svg>"), c.id);
+  assert.ok(!/NaN|undefined/.test(svg), `${c.id} 좌표 오류`);
+  assert.ok(svg.includes(c.nameKo), `${c.id} 이름`);
+});
+assert.ok(!/NaN|undefined/.test(ART.back()));
 
 console.log("OK — 샘플 리딩:");
 spread.forEach((s) => console.log(" ", interpret(s).title, "·", interpret(s).cardLabel));

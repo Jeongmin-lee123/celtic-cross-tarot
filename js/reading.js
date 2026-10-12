@@ -58,6 +58,11 @@ function shuffle(deck) {
   return a;
 }
 
+// 사용자가 펼쳐진 카드에서 직접 고르도록, 섞은 순서와 카드별 정·역방향을 미리 정해 둔다
+function prepareDeck(deck) {
+  return shuffle(deck).map((card) => ({ card, reversed: randomInt(2) === 1 }));
+}
+
 // 섞은 덱의 위에서부터 10장을 순서대로 뽑는다. 각 카드는 50% 확률로 역방향.
 function drawSpread(deck) {
   return shuffle(deck).slice(0, POSITIONS.length).map((card, i) => ({
@@ -158,5 +163,5 @@ function readingToText(spread, summary) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { POSITIONS, TOPICS, josa, shuffle, drawSpread, interpret, summarize, readingToText };
+  module.exports = { POSITIONS, TOPICS, josa, shuffle, prepareDeck, drawSpread, interpret, summarize, readingToText };
 }

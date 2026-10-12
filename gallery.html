@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>카드 도감 · 켈틱 크로스 타로</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=Nanum+Myeongjo:wght@700;800&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="logo">✦ 카드 도감</h1>
+    <a class="btn ghost" href="index.html">게임으로</a>
+  </header>
+  <main>
+    <p class="gallery-note">78장 앞면과 뒷면. 카드를 누르면 정·역방향 의미를 볼 수 있습니다.</p>
+    <div id="gallery" class="gallery"></div>
+  </main>
+  <div id="modal" class="modal" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button id="modalClose" class="modal-close" aria-label="닫기">✕</button>
+      <div id="modalCard" class="modal-card"></div>
+      <div class="modal-info">
+        <h3 id="modalTitle"></h3>
+        <p id="modalEn" class="modal-en"></p>
+        <div class="modal-meaning current"><p class="modal-label">정방향</p><p id="modalUp"></p></div>
+        <div class="modal-meaning current"><p class="modal-label">역방향</p><p id="modalRev"></p></div>
+      </div>
+    </div>
+  </div>
+  <script src="js/cards.js"></script>
+  <script src="js/art.js"></script>
+  <script>
+    const gallery = document.getElementById("gallery");
+    const modal = document.getElementById("modal");
+    const tile = (svg, label) => `<figure class="gallery-item"><div class="gallery-card">${svg}</div><figcaption>${label}</figcaption></figure>`;
+    gallery.innerHTML = tile(ART.back(), "뒷면") + DECK.map((c, i) => tile(ART.front(c), c.nameKo).replace("gallery-item", `gallery-item" data-i="${i}`)).join("");
+    gallery.addEventListener("click", (e) => {
+      const item = e.target.closest("[data-i]");
+      if (!item) return;
+      const c = DECK[item.dataset.i];
+      document.getElementById("modalCard").innerHTML = ART.front(c);
+      document.getElementById("modalTitle").textContent = c.nameKo;
+      document.getElementById("modalEn").textContent = c.nameEn;
+      document.getElementById("modalUp").textContent = `${c.upright} — ${c.uprightText}`;
+      document.getElementById("modalRev").textContent = `${c.reversed} — ${c.reversedText}`;
+      modal.hidden = false;
+    });
+    document.getElementById("modalClose").addEventListener("click", () => { modal.hidden = true; });
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.hidden = true; });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") modal.hidden = true; });
+  </script>
+</body>
+</html>
