@@ -2,7 +2,7 @@
 const assert = require("assert");
 const { DECK, SUITS } = require("../js/cards.js");
 global.SUITS = SUITS;
-const { POSITIONS, josa, drawSpread, interpret, summarize } = require("../js/reading.js");
+const { POSITIONS, TOPICS, josa, drawSpread, interpret, summarize, readingToText } = require("../js/reading.js");
 
 assert.strictEqual(DECK.length, 78, "덱은 78장");
 assert.strictEqual(new Set(DECK.map((c) => c.id)).size, 78, "카드 id 중복 없음");
@@ -31,6 +31,17 @@ spread.forEach((s) => {
 const sum = summarize(spread, "테스트 질문");
 assert.strictEqual(sum.lines.length, 6);
 sum.lines.forEach((l) => assert.ok(!/undefined|NaN/.test(l.body), l.body));
+
+for (const key of Object.keys(TOPICS)) {
+  for (let i = 0; i < 200; i++) {
+    const sp = drawSpread(DECK);
+    const sm = summarize(sp, "", key);
+    assert.strictEqual(sm.lines.length, key === "general" ? 6 : 7, `주제 ${key}`);
+    sm.lines.forEach((l) => assert.ok(!/undefined|NaN/.test(l.body), l.body));
+    const text = readingToText(sp, sm);
+    assert.ok(text.includes("10. 최종 결과") && text.includes(TOPICS[key].label));
+  }
+}
 
 console.log("OK — 샘플 리딩:");
 spread.forEach((s) => console.log(" ", interpret(s).title, "·", interpret(s).cardLabel));

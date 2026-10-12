@@ -22,6 +22,7 @@
       <p class="eyebrow">10장의 카드가 들려주는 이야기</p>
       <h2>마음속 질문을 떠올려 보세요</h2>
       <p class="sub">질문을 적으면 풀이 맨 위에 함께 표시됩니다. 비워 두어도 괜찮아요.</p>
+      <div id="topics" class="topics" role="radiogroup" aria-label="질문 주제"></div>
       <textarea id="question" rows="2" maxlength="120" placeholder="예) 지금 준비하는 이직, 잘 될까요?"></textarea>
       <button id="startBtn" class="btn primary">덱 섞기</button>
       <p class="fine">78장 덱 · 켈틱 크로스 10장 배열 · 오락용 콘텐츠입니다</p>
@@ -37,6 +38,7 @@
             <span id="deckCount" class="deck-count">78</span>
           </button>
           <div class="control-text">
+            <ol id="progress" class="progress" aria-label="진행 상황"></ol>
             <p id="prompt" class="prompt">덱을 눌러 <b>1번 카드</b>를 뽑으세요</p>
             <div class="control-buttons">
               <button id="drawBtn" class="btn primary">카드 뽑기</button>
@@ -54,6 +56,21 @@
       </aside>
     </section>
   </main>
+
+  <!-- 카드 상세 -->
+  <div id="modal" class="modal" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button id="modalClose" class="modal-close" aria-label="닫기">✕</button>
+      <div id="modalCard" class="modal-card"></div>
+      <div class="modal-info">
+        <p id="modalPos" class="modal-pos"></p>
+        <h3 id="modalTitle"></h3>
+        <p id="modalEn" class="modal-en"></p>
+        <div class="modal-meaning"><p class="modal-label">정방향</p><p id="modalUp"></p></div>
+        <div class="modal-meaning"><p class="modal-label">역방향</p><p id="modalRev"></p></div>
+      </div>
+    </div>
+  </div>
 
   <footer class="footer">카드 의미는 라이더-웨이트 계열의 일반적 해석을 바탕으로 직접 작성했습니다. 결과는 재미로만 봐 주세요.</footer>
 

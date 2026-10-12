@@ -273,6 +273,86 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
 .summary-head { font-weight: 700; color: #8a6a1f; font-size: 14px; }
 .summary .fine { color: #6b7088; }
 
+/* 주제 선택 */
+.topics { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 16px; }
+.chip {
+  font: 500 15px var(--sans);
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--night-3);
+  background: var(--night-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+.chip[aria-checked="true"] { border-color: var(--gold); color: var(--night); background: var(--gold); font-weight: 700; }
+
+/* 진행 표시 */
+.progress { list-style: none; display: flex; gap: 6px; padding: 0; margin: 0 0 10px; flex-wrap: wrap; }
+.progress li {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  border: 1px solid var(--night-3);
+  color: var(--muted);
+}
+.progress li.done { background: var(--gold); border-color: var(--gold); color: var(--night); font-weight: 700; }
+.progress li.current { border-color: var(--gold); color: var(--gold); animation: pulse 1.4s infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 4px rgba(201, 162, 74, 0.25); } }
+
+.summary-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.summary-actions .btn { flex: 1; }
+.btn.ghost-dark { background: transparent; color: #8a6a1f; border-color: #8a6a1f; }
+
+/* 카드 상세 */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(10, 14, 26, 0.75);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.modal-box {
+  position: relative;
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  max-width: 640px;
+  width: 100%;
+  background: var(--night-2);
+  border: 1px solid var(--gold);
+  border-radius: 20px;
+  padding: 28px;
+  animation: rise 0.25s ease-out;
+}
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  cursor: pointer;
+}
+.modal-card { flex: none; width: 180px; height: 290px; }
+.modal-card .nm { font-size: 22px; }
+.modal-card .num { font-size: 20px; }
+.modal-card .sym { font-size: 64px; }
+.modal-card .en { font-size: 13px; }
+.modal-card .rev-badge { font-size: 14px; }
+.modal-info h3 { font: 800 28px var(--serif); margin: 4px 0 0; color: var(--gold); }
+.modal-pos { margin: 0; font-size: 13px; color: var(--muted); }
+.modal-en { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+.modal-meaning { padding: 10px 12px; border-radius: 10px; margin-top: 8px; opacity: 0.6; }
+.modal-meaning.current { background: rgba(201, 162, 74, 0.12); opacity: 1; }
+.modal-meaning p { margin: 0; font-size: 14px; }
+.modal-label { font-weight: 700; color: var(--gold-soft); margin-bottom: 2px !important; }
+
 .footer { text-align: center; color: var(--muted); font-size: 12px; padding: 24px 16px; }
 
 @media (max-width: 900px) {
@@ -281,4 +361,12 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
   .reading-panel { position: static; max-height: none; }
   .controls { position: sticky; bottom: 0; background: var(--night); padding: 12px 0; z-index: 5; }
   .deck { width: 60px; height: 92px; }
+  .controls { gap: 14px; padding: 10px 0; }
+  .progress { gap: 4px; margin-bottom: 6px; }
+  .progress li { width: 20px; height: 20px; font-size: 10px; }
+  .prompt { font-size: 13px; margin-bottom: 6px; }
+  .control-buttons { flex-wrap: nowrap; gap: 6px; }
+  .control-buttons .btn { padding: 8px 12px; font-size: 14px; white-space: nowrap; }
+  .modal-box { flex-direction: column; text-align: center; }
+  .modal-card { width: 140px; height: 225px; }
 }

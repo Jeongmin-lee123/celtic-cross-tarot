@@ -73,7 +73,7 @@ const SUITS = {
   wands: { ko: "완드", en: "Wands", symbol: "🔥", area: "일과 열정", element: "불" },
   cups: { ko: "컵", en: "Cups", symbol: "💧", area: "감정과 관계", element: "물" },
   swords: { ko: "소드", en: "Swords", symbol: "⚔️", area: "생각과 갈등", element: "공기" },
-  pentacles: { ko: "펜타클", en: "Pentacles", symbol: "🪙", area: "돈과 현실", element: "흙" },
+  pentacles: { ko: "펜타클", en: "Pentacles", symbol: "💰", area: "돈과 현실", element: "흙" },
 };
 
 const RANKS = [

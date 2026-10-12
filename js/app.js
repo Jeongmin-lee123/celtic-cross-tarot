@@ -14,10 +14,26 @@
     deckCount: $("deckCount"), prompt: $("prompt"), drawBtn: $("drawBtn"), autoBtn: $("autoBtn"),
     readingList: $("readingList"), summaryBtn: $("summaryBtn"), summary: $("summary"),
     question: $("question"), questionLabel: $("questionLabel"), startBtn: $("startBtn"),
-    restartBtn: $("restartBtn"),
+    restartBtn: $("restartBtn"), topics: $("topics"), progress: $("progress"),
+    modal: $("modal"), modalCard: $("modalCard"), modalPos: $("modalPos"), modalTitle: $("modalTitle"),
+    modalEn: $("modalEn"), modalUp: $("modalUp"), modalRev: $("modalRev"), modalClose: $("modalClose"),
   };
 
-  let spread = [], index = 0, busy = false, autoRun = false;
+  let spread = [], index = 0, busy = false, autoRun = false, topic = "general";
+
+  function buildTopics() {
+    els.topics.innerHTML = Object.entries(TOPICS).map(([key, t]) =>
+      `<button type="button" class="chip" role="radio" data-topic="${key}" aria-checked="${key === topic}">${t.label}</button>`).join("");
+    els.topics.querySelectorAll(".chip").forEach((chip) => chip.addEventListener("click", () => {
+      topic = chip.dataset.topic;
+      els.topics.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-checked", c === chip));
+    }));
+  }
+
+  function renderProgress() {
+    els.progress.innerHTML = POSITIONS.map((p, i) =>
+      `<li class="${i < index ? "done" : i === index ? "current" : ""}" title="${p.n}. ${p.name}">${p.n}</li>`).join("");
+  }
 
   const pct = (v, total) => `${(v / total) * 100}%`;
 
@@ -64,7 +80,7 @@
     flyer.innerHTML = `<div class="rot${n === 2 ? " crossed" : ""}"><div class="card">${cardFace(item.card, item.reversed)}</div></div>`;
     slot.appendChild(flyer);
     slot.classList.add("filled");
-    flyer.addEventListener("click", () => focusEntry(n));
+    flyer.addEventListener("click", () => { focusEntry(n); openModal(item); });
 
     // 덱 위치에서 슬롯으로 날아오는 연출
     const from = els.deck.getBoundingClientRect();
@@ -99,18 +115,36 @@
       <p class="entry-kw">${r.keywords.split(", ").map((k) => `<span>${k}</span>`).join("")}</p>
       <p class="entry-text">${r.text}</p>`;
     els.readingList.appendChild(li);
-    focusEntry(item.position.n);
+    // 모바일에서는 풀이 목록이 게임판 아래에 있어, 자동 스크롤하면 카드가 놓이는 장면을 놓친다
+    focusEntry(item.position.n, !window.matchMedia("(max-width: 900px)").matches);
   }
 
-  function focusEntry(n) {
+  function openModal(item) {
+    const { card, reversed, position } = item;
+    els.modalCard.innerHTML = `<div class="card flipped">${cardFace(card, reversed)}</div>`;
+    els.modalPos.textContent = `${position.n}. ${position.name} · ${reversed ? "역방향" : "정방향"}`;
+    els.modalTitle.textContent = card.nameKo;
+    els.modalEn.textContent = card.nameEn;
+    els.modalUp.textContent = `${card.upright} — ${card.uprightText}`;
+    els.modalRev.textContent = `${card.reversed} — ${card.reversedText}`;
+    els.modalUp.parentElement.classList.toggle("current", !reversed);
+    els.modalRev.parentElement.classList.toggle("current", reversed);
+    els.modal.hidden = false;
+    els.modalClose.focus();
+  }
+
+  function closeModal() { els.modal.hidden = true; }
+
+  function focusEntry(n, scroll = true) {
     els.readingList.querySelectorAll(".entry").forEach((e) => e.classList.toggle("active", e.dataset.n === String(n)));
     els.board.querySelectorAll(".slot").forEach((s) => s.classList.toggle("active", s.dataset.n === String(n)));
     const target = els.readingList.querySelector(`.entry[data-n="${n}"]`);
-    if (target) target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (target && scroll) target.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   function updatePrompt() {
     els.deckCount.textContent = DECK.length - index;
+    renderProgress();
     if (index >= POSITIONS.length) {
       els.prompt.innerHTML = "10장을 모두 뽑았습니다. <b>종합 풀이</b>를 확인하세요";
       els.drawBtn.hidden = els.autoBtn.hidden = true;
@@ -145,15 +179,28 @@
   }
 
   function showSummary() {
-    const s = summarize(spread, els.question.value.trim());
+    const s = summarize(spread, els.question.value.trim(), topic);
     els.summary.innerHTML = `<h3>종합 풀이</h3>` +
       s.lines.map((l) => `<div class="summary-row"><p class="summary-head">${l.head}</p><p>${l.body}</p></div>`).join("") +
       `<p class="fine">타로는 정답이 아니라 생각을 정리하는 거울입니다. 중요한 결정은 스스로의 판단을 믿으세요.</p>
-       <button id="againBtn" class="btn primary wide">같은 질문으로 다시 뽑기</button>`;
+       <div class="summary-actions">
+         <button id="copyBtn" class="btn ghost-dark">결과 복사</button>
+         <button id="againBtn" class="btn primary">같은 질문으로 다시 뽑기</button>
+       </div>`;
     els.summary.hidden = false;
     els.summaryBtn.hidden = true;
     els.summary.scrollIntoView({ behavior: "smooth", block: "start" });
     $("againBtn").addEventListener("click", startGame);
+    $("copyBtn").addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      try {
+        await navigator.clipboard.writeText(readingToText(spread, s));
+        btn.textContent = "복사했어요 ✓";
+      } catch {
+        btn.textContent = "복사 실패 — 직접 선택해 주세요";
+      }
+      setTimeout(() => { btn.textContent = "결과 복사"; }, 2000);
+    });
   }
 
   function startGame() {
@@ -167,8 +214,9 @@
     els.drawBtn.disabled = els.autoBtn.disabled = els.deck.disabled = false;
 
     const q = els.question.value.trim();
-    els.questionLabel.hidden = !q;
-    els.questionLabel.textContent = q ? `질문 · ${q}` : "";
+    const label = TOPICS[topic].label;
+    els.questionLabel.hidden = false;
+    els.questionLabel.textContent = q ? `${label} · ${q}` : `${label}`;
 
     els.intro.hidden = true;
     els.game.hidden = false;
@@ -187,6 +235,9 @@
     els.question.focus();
   }
 
+  buildTopics();
+  els.modalClose.addEventListener("click", closeModal);
+  els.modal.addEventListener("click", (e) => { if (e.target === els.modal) closeModal(); });
   els.startBtn.addEventListener("click", startGame);
   els.deck.addEventListener("click", drawNext);
   els.drawBtn.addEventListener("click", drawNext);
@@ -197,7 +248,8 @@
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); startGame(); }
   });
   document.addEventListener("keydown", (e) => {
-    if (els.game.hidden || e.target === els.question) return;
+    if (e.key === "Escape" && !els.modal.hidden) { closeModal(); return; }
+    if (els.game.hidden || e.target === els.question || !els.modal.hidden) return;
     if (e.code === "Space") { e.preventDefault(); drawNext(); }
   });
 })();

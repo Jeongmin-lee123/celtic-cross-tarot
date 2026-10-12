@@ -23,6 +23,14 @@ const POSITIONS = [
     up: "지금 방향대로라면 긍정적인 결말이 기대됩니다.", rev: "지금 방향 그대로라면 아쉬움이 남을 수 있으니 조정이 필요합니다." },
 ];
 
+// 질문 주제. suit는 그 주제와 가장 가까운 수트
+const TOPICS = {
+  general: { label: "전체 운", suit: null },
+  love: { label: "연애·관계", suit: "cups" },
+  work: { label: "일·진로", suit: "wands" },
+  money: { label: "금전", suit: "pentacles" },
+};
+
 // 한글 받침에 맞는 조사 선택 (이/가, 은/는, 을/를, 과/와)
 function josa(word, pair) {
   const [withBatchim, without] = pair.split("/");
@@ -71,7 +79,7 @@ function interpret({ position, card, reversed }) {
   };
 }
 
-function summarize(spread, question) {
+function summarize(spread, question, topicKey = "general") {
   const at = (n) => spread[n - 1];
   const name = (n) => at(n).card.nameKo;
   const upCount = spread.filter((s) => !s.reversed).length;
@@ -111,6 +119,20 @@ function summarize(spread, question) {
       : `메이저 카드 ${majors}장, 마이너 카드 ${10 - majors}장입니다. `) +
       (topSuit && topSuit[1] >= 3 ? `${josa(SUITS[topSuit[0]].ko, "이/가")} ${topSuit[1]}장으로 가장 많아 '${SUITS[topSuit[0]].area}'의 비중이 큽니다.` : ""),
   });
+  const topic = TOPICS[topicKey] || TOPICS.general;
+  if (topic.suit) {
+    const n = suitCounts[topic.suit] || 0;
+    const suit = SUITS[topic.suit];
+    lines.push({
+      head: `주제 · ${topic.label}`,
+      body: n >= 3 ? `주제와 맞닿은 ${suit.ko} 카드가 ${n}장입니다. 이 문제가 지금 마음의 한가운데에 있습니다.`
+        : n >= 1 ? `주제와 맞닿은 ${suit.ko} 카드가 ${n}장 나왔습니다. ` +
+          spread.filter((s) => s.card.suit === topic.suit).map((s) => `${s.position.n}번(${s.position.name})`).join(", ") +
+          " 자리를 특히 눈여겨보세요."
+        : `주제와 직접 맞닿은 ${suit.ko} 카드가 없습니다.` +
+          (topSuit ? ` 오히려 '${SUITS[topSuit[0]].area}' 쪽에서 실마리를 찾아보세요.` : ""),
+    });
+  }
   lines.push({
     head: "결론과 조언",
     body: `최종 결과는 ${josa(name(10), "이/가")} ${at(10).reversed ? "역방향" : "정방향"}으로 나왔습니다. ` +
@@ -118,9 +140,23 @@ function summarize(spread, question) {
       `태도 카드인 ${josa(name(7), "이/가")} 조언합니다: '${(at(7).reversed ? at(7).card.reversed : at(7).card.upright).split(", ")[0]}'에 주목하세요.`,
   });
 
-  return { question: question || "", lines };
+  return { question: question || "", topic: topic.label, lines };
+}
+
+// 클립보드 복사용 텍스트
+function readingToText(spread, summary) {
+  const out = ["[켈틱 크로스 타로]"];
+  if (summary.question) out.push(`질문: ${summary.question}`);
+  out.push(`주제: ${summary.topic}`, "");
+  spread.forEach((s) => {
+    const r = interpret(s);
+    out.push(`${r.title} — ${r.cardLabel}`, `  ${r.text}`);
+  });
+  out.push("", "[종합 풀이]");
+  summary.lines.forEach((l) => out.push(`- ${l.head}: ${l.body}`));
+  return out.join("\n");
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { POSITIONS, josa, shuffle, drawSpread, interpret, summarize };
+  module.exports = { POSITIONS, TOPICS, josa, shuffle, drawSpread, interpret, summarize, readingToText };
 }

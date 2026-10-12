@@ -71,10 +71,16 @@ def parse_result(html: str) -> dict:
     }
 
 
+def save(cards: dict):
+    ordered = sorted(cards.values(), key=lambda c: c["number"])
+    CARDS_PATH.write_text(json.dumps(ordered, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--max-calls", type=int, default=200)
     ap.add_argument("--delay", type=float, default=1.5)
+    ap.add_argument("--target", type=int, default=TOTAL_CARDS, help="이 장수만큼 모이면 종료")
     args = ap.parse_args()
 
     api_key = os.environ.get("FIRECRAWL_API_KEY")
@@ -88,7 +94,7 @@ def main():
 
     with LOG_PATH.open("a", encoding="utf-8") as log:
         for i in range(1, args.max_calls + 1):
-            if len(cards) >= TOTAL_CARDS:
+            if len(cards) >= args.target:
                 break
             # Firecrawl 캐시를 피하려고 max_age=0 + 쿼리 파라미터로 매번 새로 뽑게 한다
             url = f"{BASE_URL}?_={int(time.time() * 1000)}{random.randint(0, 999)}"
@@ -97,8 +103,11 @@ def main():
                 doc = fc.scrape(url, formats=["html"], max_age=0, store_in_cache=False,
                                 only_main_content=False)
                 card = parse_result(doc.html or "")
-                entry.update(card_id=card["id"], name_ko=card["name_ko"], new=card["id"] not in cards)
-                cards.setdefault(card["id"], card)
+                is_new = card["id"] not in cards
+                entry.update(card_id=card["id"], name_ko=card["name_ko"], new=is_new)
+                if is_new:  # 중단돼도 잃지 않도록 새 카드가 나올 때마다 저장
+                    cards[card["id"]] = card
+                    save(cards)
             except Exception as e:  # 실패도 로그에 남기고 계속 진행
                 entry["error"] = repr(e)
             log.write(json.dumps(entry, ensure_ascii=False) + "\n")
@@ -107,9 +116,8 @@ def main():
                   f"  ({len(cards)}/{TOTAL_CARDS})")
             time.sleep(args.delay)
 
-    ordered = sorted(cards.values(), key=lambda c: c["number"])
-    CARDS_PATH.write_text(json.dumps(ordered, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"저장: {CARDS_PATH} ({len(ordered)}장)")
+    save(cards)
+    print(f"저장: {CARDS_PATH} ({len(cards)}장)")
 
 
 if __name__ == "__main__":
