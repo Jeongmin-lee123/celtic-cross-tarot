@@ -467,7 +467,32 @@ ${text(150, 453, card.nameKo, INK, nameSize)}
 </svg>`;
   }
 
+  // ── AI 그림(채색 필사본) 모드 ────────────────────────────────
+  // images/cards/{id}.webp 가 있는 카드는 그림을 쓰고, 이름·번호는 코드로 얹는다. 없으면 스테인드글라스 SVG.
+  const IMAGES = new Set();
+  const IMAGE_DIR = "images/cards/";
+  const useImages = (ids) => { IMAGES.clear(); ids.forEach((id) => IMAGES.add(id)); };
+  const hasImage = (id) => IMAGES.has(id);
+
+  function frameImage(card) {
+    const id = card.id, accent = card.suit ? SUIT_COLOR[card.suit] : "#9c2232";
+    const nameSize = card.nameKo.length > 6 ? 21 : 25;
+    return `<svg viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${card.nameKo} (${card.nameEn})">
+<defs><clipPath id="pic-${id}"><rect x="12" y="12" width="276" height="414" rx="8"/></clipPath></defs>
+<rect width="300" height="500" rx="16" fill="#efe2c0"/>
+<image href="${IMAGE_DIR}${id}.webp" x="12" y="12" width="276" height="414" preserveAspectRatio="xMidYMid slice" clip-path="url(#pic-${id})"/>
+<rect x="12" y="12" width="276" height="414" rx="8" fill="none" stroke="${INK}" stroke-width="2"/>
+<rect x="5" y="5" width="290" height="490" rx="13" fill="none" stroke="#c9a24a" stroke-width="3"/>
+<rect x="30" y="410" width="240" height="78" rx="4" fill="#efe2c0" stroke="#8a6a1f" stroke-width="2.5"/>
+<rect x="35" y="415" width="230" height="68" rx="2" fill="none" stroke="${accent}" stroke-width="1.2"/>
+<text x="150" y="429" text-anchor="middle" dominant-baseline="middle" font-family="'Nanum Myeongjo', Georgia, serif" font-weight="800" font-size="14" letter-spacing="1" fill="${accent}">✠ ${card.numeral} ✠</text>
+${text(150, 452, card.nameKo, INK, nameSize)}
+<text x="150" y="474" text-anchor="middle" dominant-baseline="middle" font-family="'UnifrakturMaguntia', Georgia, serif" font-size="13" fill="#4a3a2a">${card.nameEn}</text>
+</svg>`;
+  }
+
   function front(card) {
+    if (hasImage(card.id)) return frameImage(card);
     if (card.arcana === "major") {
       const n = parseInt(card.id.split("-")[1], 10);
       const scene = MAJOR_SCENES[n];
@@ -479,6 +504,12 @@ ${text(150, 453, card.nameKo, INK, nameSize)}
 
   // ── 뒷면: 성당 장미창. 12회 회전 대칭이라 180°로 돌려도 같다 (역방향을 뒷면으로 알 수 없게) ──
   function back() {
+    if (hasImage("back")) {
+      return `<svg viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
+<defs><clipPath id="pic-back"><rect width="300" height="500" rx="16"/></clipPath></defs>
+<image href="${IMAGE_DIR}back.webp" width="300" height="500" preserveAspectRatio="xMidYMid slice" clip-path="url(#pic-back)"/>
+<rect x="5" y="5" width="290" height="490" rx="13" fill="none" stroke="#c9a24a" stroke-width="3"/></svg>`;
+    }
     const cx = 150, cy = 250, RUBY = "#8e1c2c", SAPH = "#1f3a88", EMER = "#1e6b45", AMBER = "#c98a1b";
     let petals = "", roundels = "", spokes = "";
     for (let i = 0; i < 12; i++) {
@@ -511,7 +542,7 @@ ${quatrefoil(150, 72, 16, RUBY)}${quatrefoil(150, 428, 16, RUBY)}
 </svg>`;
   }
 
-  return { front, back };
+  return { front, back, useImages, hasImage, IMAGE_DIR };
 })();
 
 if (typeof module !== "undefined") module.exports = { ART };

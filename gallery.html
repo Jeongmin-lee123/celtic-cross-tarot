@@ -34,7 +34,15 @@
     const gallery = document.getElementById("gallery");
     const modal = document.getElementById("modal");
     const tile = (svg, label) => `<figure class="gallery-item"><div class="gallery-card">${svg}</div><figcaption>${label}</figcaption></figure>`;
-    gallery.innerHTML = tile(ART.back(), "뒷면") + DECK.map((c, i) => tile(ART.front(c), c.nameKo).replace("gallery-item", `gallery-item" data-i="${i}`)).join("");
+    const render = () => {
+      gallery.innerHTML = tile(ART.back(), "뒷면") + DECK.map((c, i) => tile(ART.front(c), c.nameKo).replace("gallery-item", `gallery-item" data-i="${i}`)).join("");
+    };
+    // AI 그림 목록을 읽은 뒤 그린다. 없으면 SVG 그림으로
+    fetch(`${ART.IMAGE_DIR}manifest.json`, { cache: "no-cache" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((ids) => ART.useImages(ids))
+      .catch(() => {})
+      .finally(render);
     gallery.addEventListener("click", (e) => {
       const item = e.target.closest("[data-i]");
       if (!item) return;

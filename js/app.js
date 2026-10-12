@@ -22,7 +22,17 @@
   let deck = [], spread = [], busy = false, topic = "general";
 
   // 카드 뒷면은 한 번만 만들어 CSS 배경으로 재사용한다 (펼친 78장 + 뒤집기 전 카드)
-  document.documentElement.style.setProperty("--card-back", `url("data:image/svg+xml,${encodeURIComponent(ART.back())}")`);
+  const setBack = () => document.documentElement.style.setProperty("--card-back", ART.hasImage("back")
+    // CSS 변수 안의 상대 경로는 css/ 기준으로 풀리므로 페이지 기준 절대 주소로 넘긴다
+    ? `url("${new URL(`${ART.IMAGE_DIR}back.webp`, document.baseURI).href}")`
+    : `url("data:image/svg+xml,${encodeURIComponent(ART.back())}")`);
+  setBack();
+
+  // AI 그림이 있으면 쓴다. 목록이 없거나 못 읽으면 SVG 그림 그대로
+  fetch(`${ART.IMAGE_DIR}manifest.json`, { cache: "no-cache" })
+    .then((r) => (r.ok ? r.json() : []))
+    .then((ids) => { ART.useImages(ids); setBack(); })
+    .catch(() => {});
 
   function buildTopics() {
     els.topics.innerHTML = Object.entries(TOPICS).map(([key, t]) =>

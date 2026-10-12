@@ -6,3 +6,6 @@ research/analysis.json
 __pycache__/
 .env
 .DS_Store
+
+# AI로 만든 카드 그림 원본 (게임용으로 줄인 images/cards/*.webp 만 올린다)
+art-source/

@@ -59,6 +59,14 @@ DECK.forEach((c) => {
 });
 assert.ok(!/NaN|undefined/.test(ART.back()));
 
+// AI 그림 모드: 그림이 있는 카드만 <image>를 쓰고, 나머지는 SVG 그림으로 대체
+ART.useImages(["major-0", "back"]);
+assert.ok(ART.front(DECK[0]).includes('href="images/cards/major-0.webp"'), "그림 있는 카드");
+assert.ok(ART.front(DECK[0]).includes(DECK[0].nameKo), "그림 카드에도 이름");
+assert.ok(!ART.front(DECK[1]).includes("<image"), "그림 없는 카드는 SVG");
+assert.ok(ART.back().includes("back.webp"));
+ART.useImages([]);
+
 console.log("OK — 샘플 리딩:");
 spread.forEach((s) => console.log(" ", interpret(s).title, "·", interpret(s).cardLabel));
 sum.lines.forEach((l) => console.log(" -", l.head + ":", l.body));
