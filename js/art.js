@@ -1,7 +1,8 @@
-// 카드 앞면·뒷면 SVG 아트. 모든 그림은 이 파일의 도형 조합으로 직접 그린다.
-// 캔버스 300×500 (표준 타로 70×120mm 비율에 가까움): 위 번호, 가운데 그림, 아래 이름 배너.
+// 카드 앞면·뒷면 SVG 아트 — 중세 성당 스테인드글라스 양식. 모든 그림은 이 파일의 도형 조합으로 직접 그린다.
+// 캔버스 300×500 (표준 타로 70×120mm 비율에 가까움): 고딕 첨두아치 창 안에 장면, 아래 명문(銘文) 패널.
+// 장면은 밝은 색으로 그린 뒤 glassify()가 보석색 유리로 바꾸고, 납선(검은 윤곽)을 굵게 만든다.
 const ART = (() => {
-  const INK = "#1e2438", GOLD = "#c9a24a", GOLD_D = "#8a6a1f", PARCH = "#f6efdd", WHITE = "#fbf8f0";
+  const INK = "#15121c", GOLD = "#c9a24a", GOLD_D = "#8a6a1f", PARCH = "#f6efdd", WHITE = "#fbf8f0";
   const SKIN = "#f1d9bd", ROBE = "#5b6fa8", ROBE2 = "#b5452f", ROBE3 = "#e8e0c8", GREEN = "#5e7d3a";
   const SW = 2.4; // 기본 선 굵기
 
@@ -45,13 +46,22 @@ const ART = (() => {
   }
   const crescent = (x, y, r, fill = "#f3e6b0", dir = 1) =>
     path(`M${x},${y - r} A${r},${r} 0 1,${dir > 0 ? 0 : 1} ${x},${y + r} A${r * 0.75},${r} 0 1,${dir > 0 ? 1 : 0} ${x},${y - r}Z`, fill, GOLD_D, 1.8);
+  // 넓은 면은 실제 유리처럼 납선으로 여러 조각을 잇는다
   const mountains = (y, color = "#9aa6b8") =>
-    path(`M20,${y} L70,${y - 70} L110,${y - 30} L160,${y - 95} L215,${y - 25} L250,${y - 60} L280,${y} Z`, color, INK, 2);
-  const ground = (y, color = "#c8d4a8") => rect(20, y, 260, 400 - y, color, "none", 0);
+    path(`M20,${y} L70,${y - 70} L110,${y - 30} L160,${y - 95} L215,${y - 25} L250,${y - 60} L280,${y} Z`, color, INK, 2) +
+    path(`M70,${y - 70} L88,${y} M160,${y - 95} L150,${y - 40} L178,${y} M250,${y - 60} L238,${y} M110,${y - 30} L130,${y}`, "none", INK, 1.3);
+  const ground = (y, color = "#c8d4a8") => {
+    const h = 420 - y, mid = y + h * 0.45;
+    return rect(20, y, 260, h, color, INK, 1.4) +
+      path(`M20,${mid} Q90,${mid - 8} 150,${mid} T280,${mid}`, "none", INK, 1.3) +
+      [60, 120, 185, 245].map((x, i) => line(x, i % 2 ? y : mid, x + 12, i % 2 ? mid : 420, INK, 1.2)).join("");
+  };
   function waves(y, color = "#7ea6c9") {
     let d = `M20,${y}`;
     for (let x = 20; x < 280; x += 26) d += ` q13,-9 26,0`;
-    return path(`${d} L280,400 L20,400 Z`, color, INK, 1.8);
+    let d2 = `M20,${y + 24}`;
+    for (let x = 20; x < 280; x += 26) d2 += ` q13,-7 26,0`;
+    return path(`${d} L280,420 L20,420 Z`, color, INK, 1.8) + path(d2, "none", INK, 1.2);
   }
   const cloud = (x, y, s = 1) =>
     path(`M${x - 30 * s},${y} a${12 * s},${12 * s} 0 0,1 ${16 * s},-${14 * s} a${16 * s},${16 * s} 0 0,1 ${28 * s},-${4 * s} a${14 * s},${14 * s} 0 0,1 ${16 * s},${18 * s} Z`, WHITE, INK, 1.8);
@@ -69,8 +79,12 @@ const ART = (() => {
     const robe = o.robe || ROBE, h = (o.height || 92) * s, w = (o.width || 30) * s;
     const sh = y + 15 * s;
     let out = "";
-    if (o.halo) out += circle(x, y, 20 * s, "#f8e7a8", GOLD_D, 1.4);
-    out += path(`M${x - 9 * s},${sh} L${x - w},${y + h} L${x + w},${y + h} L${x + 9 * s},${sh} Z`, robe, INK, 2);
+    if (o.halo) out += circle(x, y, 20 * s, "#f8e7a8", INK, 2) + circle(x, y, 16 * s, "none", GOLD_D, 1);
+    out += path(`M${x - 9 * s},${sh} L${x - w},${y + h} Q${x - w / 2},${y + h + 5 * s} ${x},${y + h} Q${x + w / 2},${y + h + 5 * s} ${x + w},${y + h} L${x + 9 * s},${sh} Z`, robe, INK, 2);
+    // 옷 주름(납선)과 금색 칼라
+    out += line(x - 3 * s, sh + 14 * s, x - w * 0.55, y + h - 2 * s, INK, 1.3) + line(x + 3 * s, sh + 14 * s, x + w * 0.55, y + h - 2 * s, INK, 1.3) +
+      line(x, sh + 24 * s, x, y + h + 2 * s, INK, 1.1);
+    out += path(`M${x - 9 * s},${sh} Q${x},${sh + 9 * s} ${x + 9 * s},${sh}`, "none", GOLD, 2.6 * s);
     if (o.belt) out += line(x - 13 * s, y + 45 * s, x + 13 * s, y + 45 * s, GOLD, 3 * s);
     const arm = (side, kind) => {
       const sx = x + side * 9 * s, sy = sh + 4 * s;
@@ -79,14 +93,21 @@ const ART = (() => {
         out: [sx + side * 34 * s, sy + 6 * s], forward: [sx + side * 20 * s, sy + 26 * s],
       };
       const [ex, ey] = ends[kind];
-      return line(sx, sy, ex, ey, robe, 7 * s) + circle(ex, ey, 3.6 * s, SKIN, INK, 1.2);
+      return line(sx, sy, ex, ey, INK, 7 * s + 3) + line(sx, sy, ex, ey, robe, 7 * s) + circle(ex, ey, 3.6 * s, SKIN, INK, 1.4);
     };
     const arms = o.arms || "down";
     const left = arms === "left-up" ? "up" : arms === "right-up" ? "down" : arms;
     const right = arms === "right-up" ? "up" : arms === "left-up" ? "down" : arms;
     out += arm(-1, left) + arm(1, right);
     if (o.hood) out += path(`M${x - 15 * s},${y + 14 * s} Q${x},${y - 30 * s} ${x + 15 * s},${y + 14 * s} Z`, robe, INK, 2);
+    if (!o.skull && !o.hood) out += path(`M${x - 12 * s},${y + 4 * s} Q${x - 14 * s},${y - 15 * s} ${x},${y - 14 * s} Q${x + 14 * s},${y - 15 * s} ${x + 12 * s},${y + 4 * s} Z`, o.hair || "#8a5426", INK, 1.6);
     out += circle(x, y, 11 * s, SKIN, INK, 2);
+    if (!o.skull && s >= 0.5) {
+      // 유리에 그려 넣은 얼굴 선 (눈썹, 눈, 코)
+      out += path(`M${x - 7 * s},${y - 3 * s} q3,-2.5 6,0 M${x + 1 * s},${y - 3 * s} q3,-2.5 6,0`, "none", INK, 0.9) +
+        line(x - 4.5 * s, y - 0.5 * s, x - 2.5 * s, y - 0.5 * s, INK, 1.1) + line(x + 2.5 * s, y - 0.5 * s, x + 4.5 * s, y - 0.5 * s, INK, 1.1) +
+        path(`M${x},${y - 1 * s} l-1.2,${4 * s} h2.4`, "none", INK, 0.8);
+    }
     if (o.crown) out += crown(x, y - 9 * s, 0.8 * s);
     if (o.tiara) out += path(`M${x - 9 * s},${y - 9 * s} L${x},${y - 32 * s} L${x + 9 * s},${y - 9 * s} Z`, GOLD, GOLD_D, 1.6);
     if (o.horns) out += path(`M${x - 8 * s},${y - 8 * s} q-8,-14 -2,-22 M${x + 8 * s},${y - 8 * s} q8,-14 2,-22`, "none", INK, 2.6 * s);
@@ -329,7 +350,7 @@ const ART = (() => {
     9: [[105, 130], [195, 130], [105, 205], [195, 205], [150, 240], [105, 275], [195, 275], [105, 350], [195, 350]],
     10: [[105, 125], [195, 125], [150, 168], [105, 210], [195, 210], [105, 270], [195, 270], [150, 312], [105, 355], [195, 355]],
   };
-  const SUIT_SKY = { wands: "red", cups: "pale", swords: "pale", pentacles: "day" };
+  const SUIT_SKY = { wands: "red", cups: "pale", swords: "dusk", pentacles: "day" };
 
   function minorArt(card) {
     const suit = card.suit, color = SUIT_COLOR[suit], icon = SUIT_ICON[suit];
@@ -344,7 +365,9 @@ const ART = (() => {
     }
     if (PIPS[rank]) {
       const s = { 2: 0.85, 3: 0.75, 4: 0.75, 5: 0.7 }[rank] || 0.6;
-      const frame = rect(60, 95, 180, 295, "none", color, 1.6, 12);
+      // 밝은 유리 판 위에 핍을 올려 대비를 준다 (가장자리는 수트 색 띠)
+      const frame = rect(54, 88, 192, 309, color, INK, 2.4, 14) + rect(64, 98, 172, 289, "#f7f2e6", INK, 2, 10) +
+        path("M64,190 h172 M64,295 h172", "none", INK, 1);
       return { sky: SUIT_SKY[suit], art: frame + PIPS[rank].map(([x, y]) => icon(x, y, s)).join("") };
     }
     // 코트 카드: 인물 + 수트 상징
@@ -359,26 +382,88 @@ const ART = (() => {
     return { sky: SUIT_SKY[suit], art: ground + court.extra + figure(150, court.y, court.s, court.o) + icon(hx + 12, hy - 6, 0.7) };
   }
 
-  // ── 카드 틀 ─────────────────────────────────────────────────
+  // ── 스테인드글라스 처리 ──────────────────────────────────────
+  // 밝은 그림색을 보석색 유리 톤으로 (채도↑, 명도↓). 아주 밝은 색은 흰 유리로, 어두운 납선은 그대로 둔다.
+  function jewel(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    const r = (n >> 16) / 255, gg = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+    const max = Math.max(r, gg, b), min = Math.min(r, gg, b);
+    let h = 0, sat = 0, l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min;
+      sat = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      h = max === r ? (gg - b) / d + (gg < b ? 6 : 0) : max === gg ? (b - r) / d + 2 : (r - gg) / d + 4;
+      h /= 6;
+    }
+    if (l < 0.18) return hex;
+    if (l > 0.9) { sat = Math.min(sat, 0.35); l = 0.86; }
+    else { sat = Math.min(1, sat * 1.45 + 0.12); l = Math.max(0.22, l * 0.74); }
+    const q = l < 0.5 ? l * (1 + sat) : l + sat - l * sat, p2 = 2 * l - q;
+    const conv = (t) => {
+      t = (t + 1) % 1;
+      const v = t < 1 / 6 ? p2 + (q - p2) * 6 * t : t < 1 / 2 ? q : t < 2 / 3 ? p2 + (q - p2) * (2 / 3 - t) * 6 : p2;
+      return Math.round(v * 255).toString(16).padStart(2, "0");
+    };
+    return `#${conv(h + 1 / 3)}${conv(h)}${conv(h - 1 / 3)}`;
+  }
+  const glassify = (svg) => svg
+    .replace(/(fill|stroke)="(#[0-9a-fA-F]{6})"/g, (_, attr, c) => `${attr}="${jewel(c)}"`)
+    .replace(/stroke-width="([\d.]+)"/g, (_, w) => `stroke-width="${(parseFloat(w) * 1.5).toFixed(2)}"`);
+
+  // 중세 창의 바탕: 마름모 유리 조각(quarry)을 납선으로 이은 모자이크
+  const GLASS_BG = {
+    day: ["#2a5aa0", "#3a6cb4", "#1f4a8a"], red: ["#7e1424", "#9c2232", "#651020"], night: ["#16275e", "#1f3a88", "#112050"],
+    pale: ["#1e5b5a", "#26706c", "#174a4a"], dawn: ["#4e2470", "#6a3388", "#3e1c5a"], dusk: ["#4e2470", "#6a3388", "#3e1c5a"],
+  };
+  function mosaic(sky, seed) {
+    const tones = GLASS_BG[sky] || GLASS_BG.pale;
+    let out = "", k = seed;
+    const rnd = () => { k = (k * 9301 + 49297) % 233280; return k / 233280; };
+    for (let row = 0, y = 20; y < 430; row++, y += 22) {
+      for (let x = row % 2 ? 15 : 0; x < 315; x += 30) {
+        const c = tones[Math.floor(rnd() * tones.length)];
+        out += `<path d="M${x},${y - 22} L${x + 15},${y} L${x},${y + 22} L${x - 15},${y} Z" fill="${c}" stroke="${INK}" stroke-width="1.8"/>`;
+      }
+    }
+    return out;
+  }
+  const hash = (str) => [...str].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 99991, 7);
+
+  const ARCH = "M30,404 L30,150 C30,96 78,56 150,32 C222,56 270,96 270,150 L270,404 Z";
+  // 유리의 얼룩진 두께감: 노이즈로 밝기를 ±15% 흔든다
+  const GLASS_FILTER = (id) => `<filter id="${id}" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency="0.05 0.028" numOctaves="2" seed="11"/>
+<feColorMatrix type="matrix" values="0.5 0.5 0 0 0 0.5 0.5 0 0 0 0.5 0.5 0 0 0 0 0 0 0 1"/>
+<feComposite in="SourceGraphic" operator="arithmetic" k1="0.75" k2="0.68" k3="0" k4="0"/></filter>`;
+  const quatrefoil = (x, y, r, fill) =>
+    [0, 90, 180, 270].map((a) => circle(x + r * 0.5 * Math.cos((a * Math.PI) / 180), y + r * 0.5 * Math.sin((a * Math.PI) / 180), r * 0.55, fill, INK, 2)).join("") +
+    circle(x, y, r * 0.32, "#d4a23a", INK, 1.6);
+
+  // ── 카드 틀: 석재 바탕 + 첨두아치 창 + 명문 패널 ───────────────────
   function frame(card, sky, art) {
-    const [s1, s2] = SKY[sky] || SKY.day;
-    const gid = `sky-${card.id}`;
-    const accent = card.suit ? SUIT_COLOR[card.suit] : GOLD_D;
-    const nameSize = card.nameKo.length > 6 ? 22 : 26;
+    const id = card.id, accent = card.suit ? SUIT_COLOR[card.suit] : "#9c2232";
+    const nameSize = card.nameKo.length > 6 ? 21 : 25;
     return `<svg viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${card.nameKo} (${card.nameEn})">
-<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s1}"/><stop offset="1" stop-color="${s2}"/></linearGradient>
-<clipPath id="clip-${card.id}"><rect x="20" y="62" width="260" height="338" rx="6"/></clipPath></defs>
-<rect x="0" y="0" width="300" height="500" rx="16" fill="${PARCH}"/>
-<rect x="8" y="8" width="284" height="484" rx="12" fill="none" stroke="${GOLD}" stroke-width="4"/>
-<rect x="14" y="14" width="272" height="472" rx="9" fill="none" stroke="${accent}" stroke-width="1.4"/>
-<g clip-path="url(#clip-${card.id})"><rect x="20" y="62" width="260" height="338" fill="url(#${gid})"/>${art}</g>
-<rect x="20" y="62" width="260" height="338" rx="6" fill="none" stroke="${INK}" stroke-width="2.4"/>
-<path d="M120,20 h60 l10,18 l-10,18 h-60 l-10,-18 Z" fill="${WHITE}" stroke="${accent}" stroke-width="2"/>
-${text(150, 39, card.numeral, accent, card.numeral.length > 3 ? 18 : 22)}
-${star(32, 38, 7, GOLD, 4)}${star(268, 38, 7, GOLD, 4)}
-<path d="M28,412 h244 l-8,32 l8,32 h-244 l8,-32 Z" fill="${WHITE}" stroke="${accent}" stroke-width="2"/>
-${text(150, 436, card.nameKo, INK, nameSize)}
-<text x="150" y="462" text-anchor="middle" dominant-baseline="middle" font-family="Georgia, serif" font-style="italic" font-size="13" fill="#6b7088">${card.nameEn}</text>
+<defs>
+<clipPath id="arch-${id}"><path d="${ARCH}"/></clipPath>
+${GLASS_FILTER(`glass-${id}`)}
+<radialGradient id="glow-${id}" cx="50%" cy="38%" r="65%"><stop offset="0" stop-color="#fff6d8" stop-opacity="0.38"/><stop offset="0.55" stop-color="#fff6d8" stop-opacity="0.08"/><stop offset="1" stop-color="#000" stop-opacity="0.25"/></radialGradient>
+<linearGradient id="stone-${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a3140"/><stop offset="1" stop-color="#1f1a25"/></linearGradient>
+</defs>
+<rect width="300" height="500" rx="16" fill="url(#stone-${id})"/>
+<rect x="7" y="7" width="286" height="486" rx="12" fill="none" stroke="#c9a24a" stroke-width="3"/>
+<rect x="13" y="13" width="274" height="474" rx="9" fill="none" stroke="#c9a24a" stroke-width="1" stroke-dasharray="2 4"/>
+<g clip-path="url(#arch-${id})"><g filter="url(#glass-${id})">${mosaic(sky, hash(id))}${glassify(art)}</g></g>
+<path d="${ARCH}" fill="url(#glow-${id})"/>
+<g clip-path="url(#arch-${id})"><path d="M60,110 L120,60 M190,340 L250,290 M40,260 L90,220" stroke="#fff" stroke-opacity="0.12" stroke-width="8" stroke-linecap="round"/></g>
+<path d="${ARCH}" fill="none" stroke="${INK}" stroke-width="10"/>
+<path d="${ARCH}" fill="none" stroke="#c9a24a" stroke-width="2.2"/>
+<g filter="url(#glass-${id})">${quatrefoil(36, 38, 18, accent)}${quatrefoil(264, 38, 18, accent)}</g>
+<rect x="30" y="414" width="240" height="72" rx="4" fill="#efe2c0" stroke="${INK}" stroke-width="5"/>
+<rect x="35" y="419" width="230" height="62" rx="2" fill="none" stroke="${accent}" stroke-width="1.4"/>
+<text x="150" y="431" text-anchor="middle" dominant-baseline="middle" font-family="'Nanum Myeongjo', Georgia, serif" font-weight="800" font-size="14" letter-spacing="1" fill="${accent}">✠ ${card.numeral} ✠</text>
+${text(150, 453, card.nameKo, INK, nameSize)}
+<text x="150" y="474" text-anchor="middle" dominant-baseline="middle" font-family="'UnifrakturMaguntia', Georgia, serif" font-size="13" fill="#4a3a2a">${card.nameEn}</text>
 </svg>`;
   }
 
@@ -392,29 +477,37 @@ ${text(150, 436, card.nameKo, INK, nameSize)}
     return frame(card, m.sky, m.art);
   }
 
-  // ── 뒷면: 180° 회전 대칭 (역방향을 뒷면으로 알아챌 수 없게) ─────
+  // ── 뒷면: 성당 장미창. 12회 회전 대칭이라 180°로 돌려도 같다 (역방향을 뒷면으로 알 수 없게) ──
   function back() {
-    const half = (inner) => inner + g(inner, "rotate(180 150 250)");
-    let lattice = "";
-    for (let i = -500; i < 800; i += 28) lattice += line(i, 0, i + 500, 500, "rgba(201,162,74,0.16)", 1) + line(i + 500, 0, i, 500, "rgba(201,162,74,0.16)", 1);
-    const scatter = [[60, 80], [240, 110], [90, 170], [210, 60], [45, 140], [255, 175]].map(([x, y]) => star(x, y, 5, "#e3c983", 4, "none")).join("");
-    let rays = "";
-    for (let i = 0; i < 16; i++) {
-      const a = (i * Math.PI) / 8;
-      rays += line(150 + 46 * Math.cos(a), 250 + 46 * Math.sin(a), 150 + (i % 2 ? 66 : 82) * Math.cos(a), 250 + (i % 2 ? 66 : 82) * Math.sin(a), GOLD, 2.4);
+    const cx = 150, cy = 250, RUBY = "#8e1c2c", SAPH = "#1f3a88", EMER = "#1e6b45", AMBER = "#c98a1b";
+    let petals = "", roundels = "", spokes = "";
+    for (let i = 0; i < 12; i++) {
+      const a = i * 30;
+      petals += g(path("M-15,-46 L-19,-88 Q0,-120 19,-88 L15,-46 Q0,-40 -15,-46 Z", i % 2 ? SAPH : RUBY, INK, 3.2) +
+        line(0, -50, 0, -100, INK, 1.6) + circle(0, -92, 4.5, AMBER, INK, 1.4), `translate(${cx},${cy}) rotate(${a})`);
+      roundels += g(circle(0, -112, 10, i % 2 ? EMER : AMBER, INK, 3) + circle(0, -112, 4, "#efe2c0", INK, 1.2), `translate(${cx},${cy}) rotate(${a + 15})`);
+      spokes += g(line(0, -40, 0, -128, INK, 3), `translate(${cx},${cy}) rotate(${a + 15})`);
     }
+    const inner = [0, 90, 180, 270].map((a) => g(circle(0, -17, 15, RUBY, INK, 3), `translate(${cx},${cy}) rotate(${a})`)).join("");
+    const corner = (x, y) => quatrefoil(x, y, 24, SAPH);
     return `<svg viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
-<defs><clipPath id="back-clip"><rect width="300" height="500" rx="16"/></clipPath></defs>
-<rect width="300" height="500" rx="16" fill="#1d2640"/>
-<g clip-path="url(#back-clip)">${lattice}</g>
-<rect x="8" y="8" width="284" height="484" rx="12" fill="none" stroke="${GOLD}" stroke-width="4"/>
-<rect x="18" y="18" width="264" height="464" rx="8" fill="none" stroke="${GOLD}" stroke-width="1.4"/>
-${half(scatter + crescent(150, 120, 22, "#e3c983", 1) + path("M40,40 l14,0 l-14,14 Z", GOLD, "none", 0) + path("M260,40 l-14,0 l14,14 Z", GOLD, "none", 0))}
-${rays}<circle cx="150" cy="250" r="44" fill="#141b2e" stroke="${GOLD}" stroke-width="2.4"/>
-<circle cx="150" cy="250" r="36" fill="none" stroke="${GOLD}" stroke-width="1"/>
-<path d="${starPath(150, 250, 30, 8, 0.42)}" fill="${GOLD}" stroke="none"/>
-<circle cx="150" cy="250" r="7" fill="#141b2e"/>
-<circle cx="150" cy="250" r="110" fill="none" stroke="${GOLD}" stroke-width="1" stroke-dasharray="3 6"/>
+<defs>${GLASS_FILTER("glass-back")}
+<linearGradient id="stone-back" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3140"/><stop offset="0.5" stop-color="#29222f"/><stop offset="1" stop-color="#3a3140"/></linearGradient>
+<radialGradient id="glow-back" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff6d8" stop-opacity="0.35"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></radialGradient></defs>
+<rect width="300" height="500" rx="16" fill="url(#stone-back)"/>
+<rect x="7" y="7" width="286" height="486" rx="12" fill="none" stroke="#c9a24a" stroke-width="3"/>
+<rect x="13" y="13" width="274" height="474" rx="9" fill="none" stroke="#c9a24a" stroke-width="1" stroke-dasharray="2 4"/>
+<g filter="url(#glass-back)">
+<circle cx="${cx}" cy="${cy}" r="130" fill="${SAPH}" stroke="${INK}" stroke-width="6"/>
+${spokes}${petals}${roundels}
+<circle cx="${cx}" cy="${cy}" r="42" fill="${AMBER}" stroke="${INK}" stroke-width="4"/>${inner}
+<circle cx="${cx}" cy="${cy}" r="9" fill="#efe2c0" stroke="${INK}" stroke-width="2.4"/>
+${corner(48, 62)}${corner(252, 62)}${corner(48, 438)}${corner(252, 438)}
+${quatrefoil(150, 72, 16, RUBY)}${quatrefoil(150, 428, 16, RUBY)}
+</g>
+<circle cx="${cx}" cy="${cy}" r="130" fill="url(#glow-back)"/>
+<circle cx="${cx}" cy="${cy}" r="133" fill="none" stroke="#c9a24a" stroke-width="2.4"/>
+<circle cx="${cx}" cy="${cy}" r="139" fill="none" stroke="#c9a24a" stroke-width="1" stroke-dasharray="2 5"/>
 </svg>`;
   }
 
